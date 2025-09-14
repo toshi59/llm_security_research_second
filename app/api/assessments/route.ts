@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Process all PDF files
-    const allPages: any[] = [];
+    const allPages: { pageNumber: number; text: string }[] = [];
     const fileInfos: FileInfo[] = [];
 
     for (const file of files) {

@@ -61,8 +61,8 @@ export default function CriteriaPage() {
       setCriteria(result.criteria);
       setMeta(result.meta);
       setSuccess(`観点マスタを更新しました（${result.count}項目）`);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'アップロードエラーが発生しました');
     } finally {
       setUploading(false);
     }

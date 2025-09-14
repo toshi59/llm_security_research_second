@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight, Eye, Trash2, FileDown } from 'lucide-react';
 import { Assessment } from '@/types';
@@ -21,9 +21,9 @@ export default function AssessmentsPage() {
 
   useEffect(() => {
     fetchAssessments();
-  }, [currentPage, search, sortBy, sortOrder]);
+  }, [fetchAssessments]);
 
-  const fetchAssessments = async () => {
+  const fetchAssessments = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -45,7 +45,7 @@ export default function AssessmentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, search, sortBy, sortOrder]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {

@@ -5,7 +5,7 @@ import { redis } from '@/lib/redis';
 import { parseCriteriaCSV } from '@/utils/csv';
 import { CriteriaItem, CriteriaMeta } from '@/types';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const criteria = await redis.get('criteria:current') as CriteriaItem[];
     const meta = await redis.get('criteria:meta') as CriteriaMeta;
@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
     let criteria: CriteriaItem[];
     try {
       criteria = parseCriteriaCSV(text);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
-        { error: `CSV parsing error: ${error.message}` },
+        { error: `CSV parsing error: ${error instanceof Error ? error.message : 'Unknown error'}` },
         { status: 400 }
       );
     }

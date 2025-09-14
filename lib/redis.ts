@@ -57,7 +57,7 @@ export async function getFileFromChunks(fileId: string): Promise<Buffer | null> 
   const manifest = await redis.get(`file:${fileId}`);
   if (!manifest) return null;
 
-  const { chunks } = manifest as any;
+  const { chunks } = manifest as { chunks: number };
   const buffers: Buffer[] = [];
 
   for (let i = 0; i < chunks; i++) {

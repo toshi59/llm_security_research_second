@@ -1,8 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 import { CriteriaItem, GeminiResponse, PDFPage, TargetType } from '@/types';
-import { extractRelevantPages, truncateText } from '@/utils/pdf';
-import { scoreToTriState } from '@/utils/helpers';
+// Note: Utility functions available but not used in this file
 
 if (!process.env.GOOGLE_API_KEY) {
   throw new Error('Missing GOOGLE_API_KEY environment variable');
@@ -23,7 +22,7 @@ const GeminiResponseSchema = z.object({
       itemId: z.string(),
       itemName: z.string(),
       category: z.string(),
-      score: z.number().min(1).max(5).nullable(),
+      score: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.null()]),
       triState: z.enum(['達成', '未達成', '部分', '不明']),
       reason: z.string(),
       evidence: z.object({
@@ -150,10 +149,10 @@ ${pdfContent}
 
     console.log('Raw Gemini response:', text.substring(0, 500) + '...');
 
-    let parsedResponse: any;
+    let parsedResponse: unknown;
     try {
       parsedResponse = JSON.parse(text);
-    } catch (e) {
+    } catch {
       console.log('JSON parse failed, attempting extraction...');
       try {
         // Try to extract JSON with multiple patterns
@@ -207,19 +206,20 @@ ${pdfContent}
     }
 
     // Validate the structure before Zod parsing
-    if (!parsedResponse.overall || !parsedResponse.items) {
-      console.error('Missing required fields in response:', Object.keys(parsedResponse));
+    const responseData = parsedResponse as { overall?: unknown; items?: unknown[] };
+    if (!responseData.overall || !responseData.items) {
+      console.error('Missing required fields in response:', Object.keys(parsedResponse as object));
       throw new Error('Response missing overall or items fields');
     }
 
     // Clean up response data before Zod validation
-    if (parsedResponse.items) {
-      parsedResponse.items = parsedResponse.items.map((item: any) => {
+    if (responseData.items) {
+      responseData.items = responseData.items.map((item: unknown) => {
         // Convert score=0 to null
-        let cleanedScore = item.score === 0 ? null : item.score;
+        const cleanedScore = (item as { score?: number }).score === 0 ? null : (item as { score?: number }).score;
 
         // Normalize triState values
-        let cleanedTriState = item.triState;
+        let cleanedTriState = (item as { triState?: string }).triState;
         if (typeof cleanedTriState === 'string') {
           // Remove any extra characters and normalize
           cleanedTriState = cleanedTriState.trim().replace(/[\"\']/g, '');
@@ -246,7 +246,7 @@ ${pdfContent}
         }
 
         return {
-          ...item,
+          ...(item as object),
           score: cleanedScore,
           triState: cleanedTriState
         };
@@ -256,17 +256,18 @@ ${pdfContent}
     // Validate with Zod
     let validatedResponse;
     try {
-      validatedResponse = GeminiResponseSchema.parse(parsedResponse);
+      validatedResponse = GeminiResponseSchema.parse(responseData);
     } catch (zodError) {
       console.error('Zod validation error details:', zodError);
-      if (parsedResponse.items) {
+      if (responseData.items) {
         console.log('Items with potential issues:');
-        parsedResponse.items.forEach((item: any, index: number) => {
-          console.log(`Item ${index} (${item.itemId}):`, {
-            triState: item.triState,
-            triStateType: typeof item.triState,
-            score: item.score,
-            scoreType: typeof item.score
+        responseData.items.forEach((item: unknown, index: number) => {
+          const itemData = item as { itemId?: string; triState?: string; score?: number };
+          console.log(`Item ${index} (${itemData.itemId}):`, {
+            triState: itemData.triState,
+            triStateType: typeof itemData.triState,
+            score: itemData.score,
+            scoreType: typeof itemData.score
           });
         });
       }

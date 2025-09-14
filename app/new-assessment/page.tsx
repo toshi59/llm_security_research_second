@@ -56,8 +56,8 @@ export default function NewAssessmentPage() {
           size: result.size,
           pageCount: result.pageCount,
         }]);
-      } catch (error: any) {
-        setError(error.message);
+      } catch (error: unknown) {
+        setError(error instanceof Error ? error.message : 'アップロードエラーが発生しました');
         console.error('Upload error:', error);
       }
     }
@@ -116,8 +116,8 @@ export default function NewAssessmentPage() {
       setTimeout(() => {
         router.push(`/assessments/${assessment.id}`);
       }, 1500);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : '評価処理エラーが発生しました');
       console.error('Assessment error:', error);
     } finally {
       setProcessing(false);

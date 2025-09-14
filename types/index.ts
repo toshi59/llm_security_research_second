@@ -88,3 +88,8 @@ export interface CriteriaMeta {
   version: string;
   updatedAt: string;
 }
+
+export interface PDFPage {
+  pageNumber: number;
+  text: string;
+}

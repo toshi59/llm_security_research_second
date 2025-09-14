@@ -7,10 +7,11 @@ import { Assessment } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const assessment = await redis.get(`assessment:${params.id}`) as Assessment;
+    const { id } = await params;
+    const assessment = await redis.get(`assessment:${id}`) as Assessment;
 
     if (!assessment) {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="assessment_${assessment.id}_${assessment.name.replace(/[^a-zA-Z0-9]/g, '_')}.csv"`,
+        'Content-Disposition': `attachment; filename="assessment_${id}_${assessment.name.replace(/[^a-zA-Z0-9]/g, '_')}.csv"`,
       },
     });
   } catch (error) {

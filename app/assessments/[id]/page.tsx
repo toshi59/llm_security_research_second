@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, FileDown, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { ArrowLeft, FileDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { Assessment } from '@/types';
 import { formatDate } from '@/utils/helpers';
 
@@ -30,10 +30,10 @@ export default function AssessmentDetailPage() {
       setAssessment(data);
 
       // Initially expand all categories
-      const categories = new Set(data.ratings.map((r: any) => r.category));
+      const categories = new Set(data.ratings.map((r: Assessment['ratings'][0]) => r.category)) as Set<string>;
       setExpandedCategories(categories);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : '評価の取得に失敗しました');
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ export default function AssessmentDetailPage() {
     }
   };
 
-  const getScoreDisplay = (score: number | null, triState: string) => {
+  const getScoreDisplay = (score: number | null) => {
     if (score === null) return '?';
     return score.toString();
   };
@@ -276,7 +276,7 @@ export default function AssessmentDetailPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={getScoreBadgeClass(rating.triState)}>
-                            {getScoreDisplay(rating.score, rating.triState)}
+                            {getScoreDisplay(rating.score)}
                           </span>
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             rating.triState === '達成'
