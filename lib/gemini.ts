@@ -56,7 +56,7 @@ export async function evaluateWithGemini(
   }
 ): Promise<GeminiResponse> {
   const model = getGenAI().getGenerativeModel({
-    model: 'gemini-1.5-flash-latest',
+    model: 'gemini-2.5-flash-lite',
     generationConfig: {
       temperature: 0.1,
       topK: 1,
