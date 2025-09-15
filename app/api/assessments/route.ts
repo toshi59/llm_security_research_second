@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { evaluateWithGemini } from '@/lib/gemini';
-import { parsePDF } from '@/utils/pdf';
+import { parseDocument } from '@/utils/document';
 import { generateId, calculateMetrics } from '@/utils/helpers';
 import { Assessment, CriteriaItem, FileInfo } from '@/types';
 
@@ -22,12 +22,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process all PDF files
+    // Process all document files
     const allPages: { pageNumber: number; text: string }[] = [];
     const fileInfos: FileInfo[] = [];
 
     for (const file of files) {
-      const { getFileFromChunks } = await import('@/lib/redis');
+      const { getFileFromChunks, getFileMetadata } = await import('@/lib/redis');
       const buffer = await getFileFromChunks(file.fileId);
       if (!buffer) {
         return NextResponse.json(
@@ -36,8 +36,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const pdfData = await parsePDF(buffer);
-      allPages.push(...pdfData.pages);
+      const metadata = await getFileMetadata(file.fileId);
+      if (!metadata) {
+        return NextResponse.json(
+          { error: `File metadata not found: ${file.fileId}` },
+          { status: 404 }
+        );
+      }
+
+      const documentData = await parseDocument(buffer, metadata.type);
+      allPages.push(...documentData.pages);
 
       fileInfos.push({
         fileId: file.fileId,

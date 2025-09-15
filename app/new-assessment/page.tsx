@@ -70,6 +70,8 @@ export default function NewAssessmentPage() {
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
     },
     maxSize: 100 * 1024 * 1024, // 100MB
     disabled: uploading || processing,
@@ -83,7 +85,7 @@ export default function NewAssessmentPage() {
     e.preventDefault();
 
     if (!formData.name || uploadedFiles.length === 0) {
-      setError('対象名とPDFファイルは必須です');
+      setError('対象名と文書ファイルは必須です');
       return;
     }
 
@@ -211,9 +213,9 @@ export default function NewAssessmentPage() {
           </div>
         </div>
 
-        {/* PDF Upload */}
+        {/* Document Upload */}
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">PDFアップロード</h2>
+          <h2 className="text-xl font-semibold mb-4">文書アップロード</h2>
 
           <div
             {...getRootProps()}
@@ -227,9 +229,9 @@ export default function NewAssessmentPage() {
               <p className="text-gray-700">ドロップしてアップロード</p>
             ) : (
               <>
-                <p className="text-gray-700">PDFファイルをドラッグ＆ドロップ</p>
+                <p className="text-gray-700">PDF・Word文書をドラッグ＆ドロップ</p>
                 <p className="text-sm text-gray-500 mt-1">またはクリックして選択</p>
-                <p className="text-xs text-gray-400 mt-2">最大100MB / 1,000ページ / ファイル</p>
+                <p className="text-xs text-gray-400 mt-2">PDF, DOC, DOCX対応 / 最大100MB / 1,000ページ</p>
               </>
             )}
           </div>

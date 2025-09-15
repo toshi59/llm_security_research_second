@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parsePDF } from '@/utils/pdf';
+import { parseDocument } from '@/utils/document';
 import { generateId } from '@/utils/helpers';
 
 export const runtime = 'nodejs';
@@ -18,9 +18,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (file.type !== 'application/pdf') {
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword' // .doc
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Only PDF files are allowed' },
+        { error: 'Only PDF and Word files are allowed' },
         { status: 400 }
       );
     }
@@ -38,13 +44,13 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Parse PDF to get page count
-    const pdfData = await parsePDF(buffer);
+    // Parse document to get page count
+    const documentData = await parseDocument(buffer, file.type);
 
     // Validate page count (1000 pages limit)
-    if (pdfData.totalPages > 1000) {
+    if (documentData.totalPages > 1000) {
       return NextResponse.json(
-        { error: 'PDF exceeds 1000 pages limit' },
+        { error: 'Document exceeds 1000 pages limit' },
         { status: 400 }
       );
     }
@@ -59,7 +65,7 @@ export async function POST(request: NextRequest) {
     await saveFileInChunks(fileId, buffer, {
       filename: file.name,
       type: file.type,
-      pages: pdfData.totalPages,
+      pages: documentData.totalPages,
     });
 
     return NextResponse.json({
@@ -67,8 +73,8 @@ export async function POST(request: NextRequest) {
       fileId,
       filename: file.name,
       size: file.size,
-      pageCount: pdfData.totalPages,
-      pages: pdfData.pages,
+      pageCount: documentData.totalPages,
+      pages: documentData.pages,
     });
   } catch (error) {
     console.error('Upload error:', error);

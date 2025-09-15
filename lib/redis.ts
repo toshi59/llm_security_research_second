@@ -8,13 +8,13 @@ function getRedis(): Redis {
     if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
       throw new Error('Missing Upstash Redis environment variables');
     }
-    
+
     redisInstance = new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     });
   }
-  
+
   return redisInstance;
 }
 
@@ -84,4 +84,28 @@ export async function getFileFromChunks(fileId: string): Promise<Buffer | null> 
   }
 
   return Buffer.concat(buffers);
+}
+
+export async function getFileMetadata(fileId: string): Promise<{
+  filename: string;
+  size: number;
+  type: string;
+  pages: number;
+} | null> {
+  const manifest = await redis.get(`file:${fileId}`);
+  if (!manifest) return null;
+
+  const meta = manifest as {
+    filename: string;
+    size: number;
+    type: string;
+    pages: number;
+  };
+
+  return {
+    filename: meta.filename,
+    size: meta.size,
+    type: meta.type,
+    pages: meta.pages,
+  };
 }

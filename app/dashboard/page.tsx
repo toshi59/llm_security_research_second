@@ -190,11 +190,9 @@ export default function DashboardPage() {
                     <th
                       key={category}
                       className="text-center py-3 px-2 border-b border-r font-medium text-xs"
-                      style={{ minWidth: '80px' }}
+                      style={{ minWidth: '100px' }}
                     >
-                      <div className="writing-mode-vertical">
-                        {category}
-                      </div>
+                      {category}
                     </th>
                   ))}
                 </tr>
@@ -242,15 +240,6 @@ export default function DashboardPage() {
         )}
       </Card>
 
-      <style jsx>{`
-        .writing-mode-vertical {
-          writing-mode: vertical-rl;
-          text-orientation: mixed;
-          max-height: 120px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      `}</style>
 
       {/* Recent Assessments */}
       <Card>
