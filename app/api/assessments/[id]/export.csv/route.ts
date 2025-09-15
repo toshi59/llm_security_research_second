@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-export const runtime = 'nodejs';
-import { redis } from '@/lib/redis';
 import { generateAssessmentCSV } from '@/utils/csv';
 import { Assessment } from '@/types';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+// Lazy import to avoid build-time initialization
+const getRedis = async () => {
+  const { redis } = await import('@/lib/redis');
+  return redis;
+};
 
 export async function GET(
   request: NextRequest,
@@ -11,6 +17,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const redis = await getRedis();
     const assessment = await redis.get(`assessment:${id}`) as Assessment;
 
     if (!assessment) {

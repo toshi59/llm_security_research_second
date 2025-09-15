@@ -3,11 +3,18 @@ import { z } from 'zod';
 import { CriteriaItem, GeminiResponse, PDFPage, TargetType } from '@/types';
 // Note: Utility functions available but not used in this file
 
-if (!process.env.GOOGLE_API_KEY) {
-  throw new Error('Missing GOOGLE_API_KEY environment variable');
-}
+// Lazy initialization to avoid build-time errors
+let genAI: GoogleGenerativeAI | null = null;
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+function getGenAI(): GoogleGenerativeAI {
+  if (!genAI) {
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error('Missing GOOGLE_API_KEY environment variable');
+    }
+    genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+  }
+  return genAI;
+}
 
 const GeminiResponseSchema = z.object({
   overall: z.object({
@@ -48,7 +55,7 @@ export async function evaluateWithGemini(
     provider?: string;
   }
 ): Promise<GeminiResponse> {
-  const model = genAI.getGenerativeModel({
+  const model = getGenAI().getGenerativeModel({
     model: 'gemini-2.0-flash-exp',
     generationConfig: {
       temperature: 0.1,
