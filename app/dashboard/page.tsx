@@ -6,6 +6,13 @@ import { Assessment } from '@/types';
 import { formatDate } from '@/utils/helpers';
 import { Card } from '@/components/ui/card';
 
+interface AssessmentCategoryData {
+  assessmentId: string;
+  assessmentName: string;
+  targetType: 'LLM' | 'SaaS';
+  categories: Record<string, number>;
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     totalAssessments: 0,
@@ -13,6 +20,8 @@ export default function DashboardPage() {
     recentAssessments: [] as Assessment[],
     categoryStats: {} as Record<string, { achieved: number; failed: number; unknown: number }>,
   });
+  const [assessmentCategoryMatrix, setAssessmentCategoryMatrix] = useState<AssessmentCategoryData[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,42 +30,82 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('/api/assessments?limit=5&sortBy=createdAt&sortOrder=desc');
+      const response = await fetch('/api/assessments?limit=100&sortBy=createdAt&sortOrder=desc');
       const data = await response.json();
 
-      // Calculate category statistics
+      // Calculate category statistics and matrix data
       const categoryStats: Record<string, { achieved: number; failed: number; unknown: number }> = {};
+      const categoriesSet = new Set<string>();
+      const matrixData: AssessmentCategoryData[] = [];
       let totalAchievedRate = 0;
 
       for (const assessment of data.assessments) {
         totalAchievedRate += assessment.metrics.achievedRate;
 
+        const categoryAchievements: Record<string, number> = {};
+        const categoryTotals: Record<string, number> = {};
+
         for (const rating of assessment.ratings) {
+          categoriesSet.add(rating.category);
+
           if (!categoryStats[rating.category]) {
             categoryStats[rating.category] = { achieved: 0, failed: 0, unknown: 0 };
           }
 
+          if (!categoryTotals[rating.category]) {
+            categoryTotals[rating.category] = 0;
+            categoryAchievements[rating.category] = 0;
+          }
+
+          categoryTotals[rating.category]++;
+
           if (rating.triState === '達成') {
             categoryStats[rating.category].achieved++;
+            categoryAchievements[rating.category]++;
           } else if (rating.triState === '未達成') {
             categoryStats[rating.category].failed++;
           } else if (rating.triState === '不明') {
             categoryStats[rating.category].unknown++;
           }
         }
+
+        // Calculate achievement rate per category
+        const categoryRates: Record<string, number> = {};
+        for (const [category, total] of Object.entries(categoryTotals)) {
+          categoryRates[category] = total > 0 ? (categoryAchievements[category] / total) * 100 : 0;
+        }
+
+        matrixData.push({
+          assessmentId: assessment.id,
+          assessmentName: assessment.name,
+          targetType: assessment.targetType,
+          categories: categoryRates,
+        });
       }
+
+      const sortedCategories = Array.from(categoriesSet).sort();
 
       setStats({
         totalAssessments: data.total,
         averageAchievedRate: data.total > 0 ? totalAchievedRate / data.assessments.length : 0,
-        recentAssessments: data.assessments,
+        recentAssessments: data.assessments.slice(0, 5),
         categoryStats,
       });
+      setAllCategories(sortedCategories);
+      setAssessmentCategoryMatrix(matrixData);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getColorForRate = (rate: number | undefined) => {
+    if (rate === undefined) return 'bg-gray-100 text-gray-400';
+    if (rate >= 80) return 'bg-green-100 text-green-800';
+    if (rate >= 60) return 'bg-yellow-100 text-yellow-800';
+    if (rate >= 40) return 'bg-orange-100 text-orange-800';
+    return 'bg-red-100 text-red-800';
   };
 
   if (loading) {
@@ -123,43 +172,85 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Category Stats */}
+      {/* Assessment Category Matrix */}
       <Card>
-        <h2 className="text-xl font-bold mb-4">カテゴリ別達成状況</h2>
-        <div className="space-y-4">
-          {Object.entries(stats.categoryStats).map(([category, counts]) => {
-            const total = counts.achieved + counts.failed + counts.unknown;
-            const achievedPercent = total > 0 ? (counts.achieved / total) * 100 : 0;
-            const failedPercent = total > 0 ? (counts.failed / total) * 100 : 0;
-            const unknownPercent = total > 0 ? (counts.unknown / total) * 100 : 0;
-
-            return (
-              <div key={category}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">{category}</span>
-                  <span className="text-sm text-gray-500">
-                    達成: {counts.achieved} / 未達成: {counts.failed} / 不明: {counts.unknown}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden flex">
-                  <div
-                    className="bg-green-500 h-full transition-all duration-300"
-                    style={{ width: `${achievedPercent}%` }}
-                  />
-                  <div
-                    className="bg-red-500 h-full transition-all duration-300"
-                    style={{ width: `${failedPercent}%` }}
-                  />
-                  <div
-                    className="bg-gray-400 h-full transition-all duration-300"
-                    style={{ width: `${unknownPercent}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <h2 className="text-xl font-bold mb-4">評価対象別カテゴリ達成率</h2>
+        {assessmentCategoryMatrix.length > 0 && allCategories.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="sticky left-0 bg-white z-10 text-left py-3 px-4 border-b border-r font-medium text-sm">
+                    評価対象
+                  </th>
+                  <th className="text-center py-3 px-2 border-b border-r font-medium text-sm">
+                    種別
+                  </th>
+                  {allCategories.map((category) => (
+                    <th
+                      key={category}
+                      className="text-center py-3 px-2 border-b border-r font-medium text-xs"
+                      style={{ minWidth: '80px' }}
+                    >
+                      <div className="writing-mode-vertical">
+                        {category}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {assessmentCategoryMatrix.map((assessment) => (
+                  <tr key={assessment.assessmentId} className="hover:bg-gray-50">
+                    <td className="sticky left-0 bg-white z-10 py-2 px-4 border-b border-r">
+                      <a
+                        href={`/assessments/${assessment.assessmentId}`}
+                        className="text-blue-600 hover:underline text-sm font-medium"
+                      >
+                        {assessment.assessmentName}
+                      </a>
+                    </td>
+                    <td className="text-center py-2 px-2 border-b border-r">
+                      <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                        assessment.targetType === 'LLM'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {assessment.targetType}
+                      </span>
+                    </td>
+                    {allCategories.map((category) => {
+                      const rate = assessment.categories[category];
+                      return (
+                        <td
+                          key={category}
+                          className={`text-center py-2 px-2 border-b border-r ${getColorForRate(rate)}`}
+                        >
+                          <span className="text-xs font-semibold">
+                            {rate !== undefined ? `${rate.toFixed(0)}%` : '-'}
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">評価データがありません</p>
+        )}
       </Card>
+
+      <style jsx>{`
+        .writing-mode-vertical {
+          writing-mode: vertical-rl;
+          text-orientation: mixed;
+          max-height: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      `}</style>
 
       {/* Recent Assessments */}
       <Card>
