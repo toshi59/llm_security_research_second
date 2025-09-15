@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Home,
   LayoutDashboard,
   List,
   Database,
@@ -10,6 +11,11 @@ import {
 } from 'lucide-react';
 
 const navItems = [
+  {
+    href: '/home',
+    label: 'ホーム',
+    icon: Home,
+  },
   {
     href: '/dashboard',
     label: 'ダッシュボード',
