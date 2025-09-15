@@ -75,43 +75,32 @@ export default function HomePage() {
       {/* How to Use Section */}
       <Card>
         <h2 className="text-2xl font-bold mb-6">使い方</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           <div className="text-center">
             <div className="bg-blue-50 p-4 rounded-lg mb-4">
               <div className="text-2xl font-bold text-blue-600 mb-2">1</div>
-              <Upload className="h-8 w-8 text-blue-600 mx-auto" />
+              <FileCheck className="h-8 w-8 text-blue-600 mx-auto" />
             </div>
-            <h3 className="font-semibold mb-2">評価基準の設定</h3>
+            <h3 className="font-semibold mb-2">評価対象の登録</h3>
             <p className="text-sm text-gray-600">
-              まず評価基準CSVファイルをアップロードして、評価項目とカテゴリを設定します。
+              評価したいLLMやSaaSの名称・バージョンを入力し、関連文書（PDF・Word）をアップロードします。
             </p>
           </div>
 
           <div className="text-center">
             <div className="bg-green-50 p-4 rounded-lg mb-4">
               <div className="text-2xl font-bold text-green-600 mb-2">2</div>
-              <FileCheck className="h-8 w-8 text-green-600 mx-auto" />
-            </div>
-            <h3 className="font-semibold mb-2">評価対象の登録</h3>
-            <p className="text-sm text-gray-600">
-              評価したいLLMやSaaSの名称・バージョンを入力し、関連文書をアップロードします。
-            </p>
-          </div>
-
-          <div className="text-center">
-            <div className="bg-orange-50 p-4 rounded-lg mb-4">
-              <div className="text-2xl font-bold text-orange-600 mb-2">3</div>
-              <Zap className="h-8 w-8 text-orange-600 mx-auto" />
+              <Zap className="h-8 w-8 text-green-600 mx-auto" />
             </div>
             <h3 className="font-semibold mb-2">AI自動評価</h3>
             <p className="text-sm text-gray-600">
-              AIが文書を解析し、各評価項目について自動的にスコアリングと判定を行います。
+              AIが文書を解析し、事前設定された評価項目について自動的にスコアリングと判定を行います。
             </p>
           </div>
 
           <div className="text-center">
             <div className="bg-purple-50 p-4 rounded-lg mb-4">
-              <div className="text-2xl font-bold text-purple-600 mb-2">4</div>
+              <div className="text-2xl font-bold text-purple-600 mb-2">3</div>
               <BarChart3 className="h-8 w-8 text-purple-600 mx-auto" />
             </div>
             <h3 className="font-semibold mb-2">結果の確認</h3>
@@ -163,16 +152,16 @@ export default function HomePage() {
           </p>
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => router.push('/criteria')}
-              className="btn-secondary"
-            >
-              評価基準を設定
-            </button>
-            <button
               onClick={() => router.push('/new-assessment')}
               className="btn-primary"
             >
               新規評価を開始
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="btn-secondary"
+            >
+              ダッシュボードを見る
             </button>
           </div>
         </div>
