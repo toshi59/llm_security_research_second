@@ -19,10 +19,6 @@ export default function AssessmentsPage() {
 
   const limit = 10;
 
-  useEffect(() => {
-    fetchAssessments();
-  }, [fetchAssessments]);
-
   const fetchAssessments = useCallback(async () => {
     setLoading(true);
     try {
@@ -46,6 +42,10 @@ export default function AssessmentsPage() {
       setLoading(false);
     }
   }, [currentPage, search, sortBy, sortOrder]);
+
+  useEffect(() => {
+    fetchAssessments();
+  }, [fetchAssessments]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
