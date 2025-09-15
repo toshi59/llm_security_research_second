@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-export const runtime = 'nodejs';
-import { redis, getFileFromChunks } from '@/lib/redis';
 import { evaluateWithGemini } from '@/lib/gemini';
 import { parsePDF } from '@/utils/pdf';
 import { generateId, calculateMetrics } from '@/utils/helpers';
 import { Assessment, CriteriaItem, FileInfo } from '@/types';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     const { targetType, name, version, provider, notes, files } = body;
 
     // Get current criteria from Redis
+    const { redis } = await import('@/lib/redis');
     const criteria = await redis.get('criteria:current') as CriteriaItem[];
     if (!criteria || criteria.length === 0) {
       return NextResponse.json(
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     const fileInfos: FileInfo[] = [];
 
     for (const file of files) {
+      const { getFileFromChunks } = await import('@/lib/redis');
       const buffer = await getFileFromChunks(file.fileId);
       if (!buffer) {
         return NextResponse.json(
@@ -96,6 +98,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Get all assessment keys
+    const { redis } = await import('@/lib/redis');
     const keys = await redis.keys('assessment:*');
 
     // Fetch all assessments

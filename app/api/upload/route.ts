@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-export const runtime = 'nodejs';
-import { saveFileInChunks } from '@/lib/redis';
 import { parsePDF } from '@/utils/pdf';
 import { generateId } from '@/utils/helpers';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
     // Generate unique file ID
     const fileId = generateId();
 
+    // Lazy import Redis to avoid build-time initialization
+    const { saveFileInChunks } = await import('@/lib/redis');
+    
     // Save file in chunks to Redis
     await saveFileInChunks(fileId, buffer, {
       filename: file.name,

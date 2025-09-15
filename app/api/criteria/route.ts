@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-export const runtime = 'nodejs';
-import { redis } from '@/lib/redis';
 import { parseCriteriaCSV } from '@/utils/csv';
 import { CriteriaItem, CriteriaMeta } from '@/types';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
+    const { redis } = await import('@/lib/redis');
     const criteria = await redis.get('criteria:current') as CriteriaItem[];
     const meta = await redis.get('criteria:meta') as CriteriaMeta;
 
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save to Redis
+    const { redis } = await import('@/lib/redis');
     await redis.set('criteria:current', criteria);
 
     const meta: CriteriaMeta = {

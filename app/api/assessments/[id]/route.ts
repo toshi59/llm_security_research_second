@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Assessment } from '@/types';
 
 export const runtime = 'nodejs';
-import { redis } from '@/lib/redis';
-import { Assessment } from '@/types';
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +10,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const { redis } = await import('@/lib/redis');
     const assessment = await redis.get(`assessment:${id}`) as Assessment;
 
     if (!assessment) {
@@ -35,6 +36,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const { redis } = await import('@/lib/redis');
     const result = await redis.del(`assessment:${id}`);
 
     if (result === 0) {
